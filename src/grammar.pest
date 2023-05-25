@@ -1,0 +1,24 @@
+D3L = { SOI ~ package ~ (entity | errorHandler | persistenceEntity)* ~ EOI }
+
+package = { "package" ~ identifier ~ version ~ "{" ~ (entity | errorHandler | persistenceEntity)* ~ "}" }
+
+version = { "version" ~ number ~ "." ~ number ~ "." ~ number }
+
+entity = { scope ~ "entity" ~ identifier ~ attributes ~ "{" ~ method* ~ "}" }
+errorHandler = { scope ~ "errorHandler" ~ identifier ~ "{" ~ method* ~ "}" }
+persistenceEntity = { scope ~ "persistenceEntity" ~ identifier ~ "{" ~ method* ~ "}" }
+
+scope = { "public" | "private" }
+
+attributes = { "(" ~ attribute* ~ ")" }
+attribute = { identifier ~ ":" ~ identifier ~ ","? }
+
+method = { scope ~ "method" ~ identifier ~ parameters ~ ":" ~ identifier ~ ";" }
+parameters = { "(" ~ attribute* ~ ")" }
+
+comment = { "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+
+identifier = @{ ASCII_ALPHANUMERIC+ }
+number = @{ ASCII_DIGIT+ }
+
+WHITESPACE = _{ " " | "\t" | "\r\n" | "\n" }

@@ -1,0 +1,7 @@
+D3L = _{ package }
+package = { "package" ~ identifier ~ version* }
+identifier = @{ ASCII_ALPHANUMERIC+ }
+version = { "version" ~ number ~ "." ~ number ~ "." ~ number }
+number = @{ ASCII_DIGIT+ }
+WHITESPACE = _{ " " | "\t" | "\r\n" | "\n" }
+

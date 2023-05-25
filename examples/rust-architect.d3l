@@ -1,0 +1,80 @@
+package AID3LApplication version 1.0.0 {
+    /*
+    Entity: NaturalLanguageProcessor
+    Responsibility: Handling the conversion between natural language and D3L
+    Requirements: Needs to integrate with an NLP library for language parsing
+    */
+    public entity NaturalLanguageProcessor (Input:string, Output:string) {
+        public method ConvertToD3L(Input:string): D3L; // Converts natural language to D3L
+        public method ConvertFromD3L(D3L:string): string; // Converts D3L to natural language
+    }
+
+    /*
+    Entity: AIEngine
+    Responsibility: Generating and interpreting D3L using AI models
+    Requirements: Must be able to load and utilize AI models like GPT-3
+    */
+    public entity AIEngine (Model:string*, Input:string, Output:string) {
+        public method GenerateD3L(Input:string): D3L; // Uses AI to generate D3L from input
+        public method InterpretD3L(D3L:string): string; // Uses AI to interpret D3L input
+    }
+
+    /*
+    Entity: GraphRenderer
+    Responsibility: Rendering D3L as a graph
+    Requirements: Requires a graphics library for rendering graphs
+    */
+    public entity GraphRenderer (InputD3L:string, OutputGraph:string) {
+        public method RenderD3LToGraph(InputD3L:string): Graph; // Renders D3L as a graph
+    }
+
+    /*
+    Entity: CodeGenerator
+    Responsibility: Generating code from D3L in specified languages
+    Requirements: Needs access to templates or libraries for different programming languages
+    */
+    public entity CodeGenerator (InputD3L:string, OutputCode:string, Language:string) {
+        public method GenerateCode(InputD3L:string, Language:string): Code; // Generates code from D3L in a specified language
+    }
+
+    /*
+    Entity: UserInterface
+    Responsibility: Providing user interfaces for interacting with the system
+    Requirements: Requires a web framework for the web interface and a command line library for the CLI
+    */
+    public entity UserInterface {
+        public entity Web (HTML:string, CSS:string, JavaScript:string) {
+            public method Render(): HTML; // Renders the web interface
+        }
+
+        public entity CLI {
+            public method ExecuteCommand(Command:string): Output; // Executes a command in the CLI
+        }
+    }
+
+    /*
+    Entity: ErrorHandler
+    Responsibility: Handling errors that occur within the system
+    Requirements: Requires access to a logging system for recording errors
+    */
+    public entity ErrorHandler (ErrorCode:int, ErrorMessage:string) {
+        public method HandleError(ErrorCode:int): Error; // Handles errors based on error code
+    }
+
+    /*
+    Entity: Persistence
+    Responsibility: Managing persistence of data in the system
+    Requirements: Needs a database for storing data and a file system for saving and loading files
+    */
+    public entity Persistence {
+        public entity Database (ConnectionString:string, Query:string, Result:string) {
+            public method ExecuteQuery(Query:string): Result; // Executes a query on the database
+            public method SaveResult(Result:string): Status; // Saves a result to the database
+        }
+
+        public entity FileStorage (FilePath:string, Content:string) {
+            public method SaveFile(FilePath:string, Content:string): Status; // Saves a file to disk
+            public method LoadFile(FilePath:string): File; // Loads a file from disk
+        }
+    }
+}
