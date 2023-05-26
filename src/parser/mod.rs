@@ -14,18 +14,18 @@ struct D3LParser;
 fn parse(input: &str) -> Result<Package, ParseError> {
     let pairs = D3LParser::parse(Rule::D3L, input)?;
 
-    // TODO Only supports one package, why not more
+    // TODO: Only supports one package, why not more
     dbg!(&pairs);
     for pair in pairs {
         match pair.as_rule() {
             Rule::package => {
                 dbg!(&pair);
                 let inner_pairs = pair.into_inner();
-                // NOTE Cloning here to reset the iterator
+                // NOTE: Cloning here to reset the iterator
 
                 let mut root_package: Package = inner_pairs.clone().into();
+                // TODO: This is a bit of a mess, need to clean this up
 
-                // TODO This is a bit of a mess, need to clean this up
                 // Maybe we can use a recursive function to parse the inner pairs
                 for pair in inner_pairs {
                     match pair.as_rule() {
@@ -132,7 +132,10 @@ mod tests {
     fn test_entity_with_attributes_scope_and_method() {
         let example = "package Test version 1.0.0 {
                     public entity TestEntity {
-                        method get_name ()
+                        (
+                            name: string
+                        )
+                        method get_name()
                     }
                 }";
         let result = parse(example).unwrap_or_else(|e| panic!("{}", e.to_string()));
@@ -141,6 +144,9 @@ mod tests {
         let entity = result.entities.first().unwrap();
         assert_eq!(entity.scope, Scope::Public);
 
+        let attribute = entity.attributes.first().unwrap();
+        assert_eq!(attribute.name, "name");
+        assert_eq!(attribute.atype, "string");
         let method = entity.methods.first().unwrap();
         assert_eq!(method.name, "get_name");
     }

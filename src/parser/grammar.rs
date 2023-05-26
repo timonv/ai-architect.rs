@@ -1,5 +1,8 @@
 use super::{Pairs, Rule};
-use pest::iterators::Pair;
+
+// TODO: Replace breaks with errors. Need to find a way to work around grammar pest side missing
+// compile time types, looks like they're constants (Is that even true?). Perhaps guard on the pairs type, switch to try_from
+// and return a ParseError::RuleError if the type is not what we expect.
 
 #[derive(Debug)]
 pub struct Package {
@@ -13,6 +16,7 @@ pub struct Entity {
     pub name: String,
     pub methods: Vec<Method>,
     pub scope: Scope,
+    pub attributes: Vec<Attribute>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -24,6 +28,13 @@ pub enum Scope {
 #[derive(Debug)]
 pub struct Method {
     pub name: String,
+    pub attributes: Vec<Attribute>,
+}
+
+#[derive(Debug)]
+pub struct Attribute {
+    pub name: String,
+    pub atype: String,
 }
 
 #[derive(Debug)]
@@ -78,6 +89,7 @@ impl<'i> From<Pairs<'i, Rule>> for Entity {
             name: "".to_string(),
             methods: vec![],
             scope: Scope::Private,
+            attributes: vec![],
         };
 
         for pair in pairs {
@@ -91,6 +103,10 @@ impl<'i> From<Pairs<'i, Rule>> for Entity {
                         _ => Scope::Private,
                     }
                 }
+                Rule::attributes => pair
+                    .into_inner()
+                    .filter(|pair| pair.as_rule() == Rule::attribute)
+                    .for_each(|pair| entity.attributes.push(pair.into_inner().into())),
                 _ => break,
             }
         }
@@ -102,6 +118,7 @@ impl<'i> From<Pairs<'i, Rule>> for Method {
     fn from(pairs: Pairs<'i, Rule>) -> Self {
         let mut method = Method {
             name: "".to_string(),
+            attributes: vec![],
         };
         for pair in pairs {
             match pair.as_rule() {
@@ -110,5 +127,23 @@ impl<'i> From<Pairs<'i, Rule>> for Method {
             }
         }
         return method;
+    }
+}
+
+impl<'i> From<Pairs<'i, Rule>> for Attribute {
+    fn from(pairs: Pairs<'i, Rule>) -> Self {
+        let mut attribute = Attribute {
+            name: "".to_string(),
+            atype: "".to_string(),
+        };
+
+        for pair in pairs {
+            match pair.as_rule() {
+                Rule::identifier => attribute.name = pair.as_str().to_string(),
+                Rule::atype => attribute.atype = pair.as_str().to_string(),
+                _ => break,
+            }
+        }
+        return attribute;
     }
 }
