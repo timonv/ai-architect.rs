@@ -1,7 +1,8 @@
 D3L = _{ package }
 package = { "package" ~ identifier ~ version* ~ entities* }
 entities = { ("{" ~ entity* ~ "}") }
-entity = { scope ~ "entity" ~ identifier ~ attributes ~ "{" ~ method* ~ "}" }
+entity = { scope* ~ "entity" ~ identifier ~ attributes* ~ ("{" ~ method* ~ "}")* }
+
 scope = { "public" | "private" }
 attributes = { "(" ~ attribute* ~ ")" }
 attribute = { identifier ~ ":" ~ identifier ~ ","? }

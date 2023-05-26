@@ -12,19 +12,44 @@ use grammar::Package;
 struct D3LParser;
 
 fn parse(input: &str) -> Result<Package, ParseError> {
-    let mut pairs = D3LParser::parse(Rule::D3L, input)?;
-    let root_package: Package = match pairs.next() {
-        Some(pair) => pair
-            .into_inner()
-            .try_into()
-            .map_err(|e: &'static str| ParseError::MissingRootPackage(e.to_string()))?,
-        None => {
-            return Err(ParseError::MissingRootPackage(
-                "No pairs found to convert into package".to_string(),
-            ))
+    let pairs = D3LParser::parse(Rule::D3L, input)?;
+
+    // TODO Only supports one package, why not more
+    dbg!(&pairs);
+    for pair in pairs {
+        match pair.as_rule() {
+            Rule::package => {
+                let inner_pairs = pair.into_inner();
+                // NOTE Cloning here to reset the iterator
+
+                let mut root_package = Package::try_from(inner_pairs.clone())
+                    .map_err(|e: &'static str| ParseError::MissingRootPackage(e.to_string()))?;
+
+                for pair in inner_pairs {
+                    match pair.as_rule() {
+                        Rule::entities => {
+                            for entity in pair.into_inner() {
+                                match entity.as_rule() {
+                                    Rule::entity => {
+                                        root_package
+                                            .entities
+                                            .push(entity.into_inner().as_str().into());
+                                    }
+                                    _ => unreachable!(),
+                                }
+                            }
+                        }
+                        _ => (),
+                    }
+                }
+                return Ok(root_package);
+            }
+            _ => unreachable!(),
         }
-    };
-    Ok(root_package)
+    }
+    return Err(ParseError::MissingRootPackage(
+        "Root package not found".to_string(),
+    ));
 }
 
 #[cfg(test)]
@@ -55,5 +80,18 @@ mod tests {
         assert_eq!(version.major, 1);
         assert_eq!(version.minor, 0);
         assert_eq!(version.patch, 0);
+    }
+
+    #[test]
+    fn test_parse_entities() {
+        let example = "package Test version 1.0.0 {
+                entity TestEntity
+                }";
+        let result = parse(example).unwrap_or_else(|e| panic!("{}", e.to_string()));
+        dbg!(&result);
+        assert_eq!(&result.name, "Test");
+        let entities = result.entities;
+        assert_eq!(entities.len(), 1);
+        assert_eq!(entities[0].name, "TestEntity");
     }
 }

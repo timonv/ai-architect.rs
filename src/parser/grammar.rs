@@ -4,9 +4,15 @@ use super::{Pairs, Rule};
 pub struct Package {
     pub name: String,
     pub version: Option<Version>,
+    pub entities: Vec<Entity>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
+pub struct Entity {
+    pub name: String,
+}
+
+#[derive(Debug)]
 pub struct Version {
     pub major: u8,
     pub minor: u8,
@@ -20,13 +26,13 @@ impl<'i> TryFrom<Pairs<'i, Rule>> for Package {
         let mut maybe_package: Option<Package> = None;
         let mut maybe_version: Option<Version> = None;
 
-        dbg!(&pairs);
         for pair in pairs {
             match pair.as_rule() {
                 Rule::identifier => {
                     maybe_package = Some(Package {
                         name: pair.as_str().into(),
                         version: None,
+                        entities: vec![],
                     })
                 }
                 Rule::version => {
@@ -43,7 +49,7 @@ impl<'i> TryFrom<Pairs<'i, Rule>> for Package {
                         patch: versions[2].unwrap_or(0),
                     })
                 }
-                _ => return Err("Invalid rule in root package"),
+                _ => break,
             }
         }
 
@@ -54,5 +60,11 @@ impl<'i> TryFrom<Pairs<'i, Rule>> for Package {
             }
             None => Err("No package found"),
         }
+    }
+}
+
+impl From<&str> for Entity {
+    fn from(s: &str) -> Self {
+        Entity { name: s.into() }
     }
 }
