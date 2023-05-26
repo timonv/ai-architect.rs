@@ -1,15 +1,16 @@
-D3L = _{ package }
+D3L = _{ SOI ~ package ~ EOI }
 package = { "package" ~ identifier ~ version* ~ entities* }
 entities = { ("{" ~ entity* ~ "}") }
-entity = { scope* ~ "entity" ~ identifier ~ attributes* ~ ("{" ~ method* ~ "}")* }
+entity = { scope* ~ "entity" ~ identifier ~ methods? }
 
 scope = { "public" | "private" }
 attributes = { "(" ~ attribute* ~ ")" }
 attribute = { identifier ~ ":" ~ identifier ~ ","? }
-method = { scope ~ "method" ~ identifier ~ parameters ~ ":" ~ identifier ~ ";" }
+methods = { "{" ~ method* ~ "}" }
+method = { "method" ~ identifier ~ parameters }
 parameters = { "(" ~ attribute* ~ ")" }
 
-identifier = @{ ASCII_ALPHANUMERIC+ }
+identifier = @{ (ASCII_ALPHANUMERIC|"_")+ }
 version = { "version" ~ number ~ "." ~ number ~ "." ~ number }
 number = @{ ASCII_DIGIT+ }
 WHITESPACE = _{ " " | "\t" | "\r\n" | "\n" }

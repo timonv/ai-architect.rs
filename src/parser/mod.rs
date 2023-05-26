@@ -5,7 +5,7 @@ mod errors;
 use errors::ParseError;
 
 mod grammar;
-use grammar::Package;
+use grammar::{Entity, Package, Scope};
 
 #[derive(Parser)]
 #[grammar = "grammar_inc.pest"]
@@ -19,23 +19,45 @@ fn parse(input: &str) -> Result<Package, ParseError> {
     for pair in pairs {
         match pair.as_rule() {
             Rule::package => {
+                dbg!(&pair);
                 let inner_pairs = pair.into_inner();
                 // NOTE Cloning here to reset the iterator
 
-                let mut root_package = Package::try_from(inner_pairs.clone())
-                    .map_err(|e: &'static str| ParseError::MissingRootPackage(e.to_string()))?;
+                let mut root_package: Package = inner_pairs.clone().into();
 
+                // TODO This is a bit of a mess, need to clean this up
+                // Maybe we can use a recursive function to parse the inner pairs
                 for pair in inner_pairs {
                     match pair.as_rule() {
                         Rule::entities => {
                             for entity in pair.into_inner() {
                                 match entity.as_rule() {
                                     Rule::entity => {
-                                        root_package
-                                            .entities
-                                            .push(entity.into_inner().as_str().into());
+                                        let inner_values = entity.into_inner();
+                                        let mut entity: Entity = inner_values.clone().into();
+
+                                        for inner_value in inner_values {
+                                            match inner_value.as_rule() {
+                                                Rule::methods => {
+                                                    for method in inner_value.into_inner() {
+                                                        match method.as_rule() {
+                                                            Rule::method => {
+                                                                entity.methods.push(
+                                                                    method.into_inner().into(),
+                                                                );
+                                                            }
+                                                            _ => {
+                                                                unreachable!("Unknown method rule")
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                _ => (),
+                                            }
+                                        }
+                                        root_package.entities.push(entity);
                                     }
-                                    _ => unreachable!(),
+                                    _ => unreachable!("Unkown entity rule"),
                                 }
                             }
                         }
@@ -93,5 +115,33 @@ mod tests {
         let entities = result.entities;
         assert_eq!(entities.len(), 1);
         assert_eq!(entities[0].name, "TestEntity");
+
+        let example = "package Test version 1.0.0 {
+                public entity TestEntity
+                }";
+        let result = parse(example).unwrap_or_else(|e| panic!("{}", e.to_string()));
+        dbg!(&result);
+        assert_eq!(&result.name, "Test");
+        let entities = result.entities;
+        assert_eq!(entities.len(), 1);
+        assert_eq!(entities[0].name, "TestEntity");
+        assert_eq!(entities[0].scope, Scope::Public);
+    }
+
+    #[test]
+    fn test_entity_with_attributes_scope_and_method() {
+        let example = "package Test version 1.0.0 {
+                    public entity TestEntity {
+                        method get_name ()
+                    }
+                }";
+        let result = parse(example).unwrap_or_else(|e| panic!("{}", e.to_string()));
+        dbg!(&result);
+        assert_eq!(&result.name, "Test");
+        let entity = result.entities.first().unwrap();
+        assert_eq!(entity.scope, Scope::Public);
+
+        let method = entity.methods.first().unwrap();
+        assert_eq!(method.name, "get_name");
     }
 }

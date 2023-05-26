@@ -1,4 +1,5 @@
 use super::{Pairs, Rule};
+use pest::iterators::Pair;
 
 #[derive(Debug)]
 pub struct Package {
@@ -10,6 +11,19 @@ pub struct Package {
 #[derive(Debug)]
 pub struct Entity {
     pub name: String,
+    pub methods: Vec<Method>,
+    pub scope: Scope,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum Scope {
+    Public,
+    Private,
+}
+
+#[derive(Debug)]
+pub struct Method {
+    pub name: String,
 }
 
 #[derive(Debug)]
@@ -19,21 +33,22 @@ pub struct Version {
     pub patch: u8,
 }
 
-impl<'i> TryFrom<Pairs<'i, Rule>> for Package {
-    type Error = &'static str;
-
-    fn try_from(pairs: Pairs<Rule>) -> Result<Self, Self::Error> {
-        let mut maybe_package: Option<Package> = None;
-        let mut maybe_version: Option<Version> = None;
+impl<'i> From<Pairs<'i, Rule>> for Package {
+    fn from(pairs: Pairs<Rule>) -> Self {
+        let mut package = Package {
+            name: "".into(),
+            version: None,
+            entities: vec![],
+        };
 
         for pair in pairs {
             match pair.as_rule() {
                 Rule::identifier => {
-                    maybe_package = Some(Package {
+                    package = Package {
                         name: pair.as_str().into(),
                         version: None,
                         entities: vec![],
-                    })
+                    }
                 }
                 Rule::version => {
                     let versions: Vec<Option<u8>> = pair
@@ -43,28 +58,57 @@ impl<'i> TryFrom<Pairs<'i, Rule>> for Package {
                         .map(|n| Some(n.parse().unwrap_or(0)))
                         .collect();
 
-                    maybe_version = Some(Version {
+                    package.version = Some(Version {
                         major: versions[0].unwrap_or(0),
                         minor: versions[1].unwrap_or(0),
                         patch: versions[2].unwrap_or(0),
                     })
                 }
-                _ => break,
+                _ => break, // Early return we're done,
             }
         }
 
-        match maybe_package {
-            Some(mut package) => {
-                package.version = maybe_version;
-                Ok(package)
-            }
-            None => Err("No package found"),
-        }
+        return package;
     }
 }
 
-impl From<&str> for Entity {
-    fn from(s: &str) -> Self {
-        Entity { name: s.into() }
+impl<'i> From<Pairs<'i, Rule>> for Entity {
+    fn from(pairs: Pairs<'i, Rule>) -> Self {
+        let mut entity = Entity {
+            name: "".to_string(),
+            methods: vec![],
+            scope: Scope::Private,
+        };
+
+        for pair in pairs {
+            match pair.as_rule() {
+                Rule::identifier => {
+                    entity.name = pair.as_str().to_string();
+                }
+                Rule::scope => {
+                    entity.scope = match pair.as_str() {
+                        "public" => Scope::Public,
+                        _ => Scope::Private,
+                    }
+                }
+                _ => break,
+            }
+        }
+        return entity;
+    }
+}
+
+impl<'i> From<Pairs<'i, Rule>> for Method {
+    fn from(pairs: Pairs<'i, Rule>) -> Self {
+        let mut method = Method {
+            name: "".to_string(),
+        };
+        for pair in pairs {
+            match pair.as_rule() {
+                Rule::identifier => method.name = pair.as_str().to_string(),
+                _ => break,
+            }
+        }
+        return method;
     }
 }
