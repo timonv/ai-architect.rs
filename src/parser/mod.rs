@@ -24,9 +24,9 @@ fn parse(input: &str) -> Result<Package, ParseError> {
             _ => unreachable!(),
         }
     }
-    return Err(ParseError::MissingRootPackage(
+    Err(ParseError::MissingRootPackage(
         "Root package not found".to_string(),
-    ));
+    ))
 }
 
 #[cfg(test)]

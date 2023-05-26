@@ -80,7 +80,7 @@ impl<'i> From<Pairs<'i, Rule>> for Package {
             }
         }
 
-        return package;
+        package
     }
 }
 
@@ -109,7 +109,7 @@ impl<'i> From<Pairs<'i, Rule>> for Entity {
                 _ => unreachable!("Unreachable code from Entity#from"),
             }
         }
-        return entity;
+        entity
     }
 }
 
@@ -126,7 +126,7 @@ impl<'i> From<Pairs<'i, Rule>> for Method {
                 _ => unreachable!("Unreachable code from Method#from"),
             }
         }
-        return method;
+        method
     }
 }
 
@@ -144,6 +144,6 @@ impl<'i> From<Pairs<'i, Rule>> for Attribute {
                 _ => unreachable!("Unreachable code from Attribute#from"),
             }
         }
-        return attribute;
+        attribute
     }
 }
