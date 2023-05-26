@@ -1,12 +1,12 @@
 D3L = _{ SOI ~ package ~ EOI }
 package = { "package" ~ identifier ~ version* ~ entities* }
-entities = { ("{" ~ entity* ~ "}") }
+entities = _{ ("{" ~ entity* ~ "}") }
 entity = { scope* ~ "entity" ~ identifier ~ ( "{" ~ attributes? ~ methods? ~ "}" )? }
 
-attributes = { "(" ~ attribute* ~ ")" }
+attributes = _{ "(" ~ attribute* ~ ")" }
 attribute = { identifier ~ ":" ~ atype ~ ","? }
 
-methods = { method+ }
+methods = _{ method+ }
 method = ${ "method " ~ identifier ~ parameters }
 
 scope = { "public" | "private" }

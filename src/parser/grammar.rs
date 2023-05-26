@@ -75,7 +75,8 @@ impl<'i> From<Pairs<'i, Rule>> for Package {
                         patch: versions[2].unwrap_or(0),
                     })
                 }
-                _ => break, // Early return we're done,
+                Rule::entity => package.entities.push(pair.into_inner().into()), // Early return we're done,
+                _ => unreachable!("Unreachable code from Package#from"),
             }
         }
 
@@ -103,11 +104,9 @@ impl<'i> From<Pairs<'i, Rule>> for Entity {
                         _ => Scope::Private,
                     }
                 }
-                Rule::attributes => pair
-                    .into_inner()
-                    .filter(|pair| pair.as_rule() == Rule::attribute)
-                    .for_each(|pair| entity.attributes.push(pair.into_inner().into())),
-                _ => break,
+                Rule::attribute => entity.attributes.push(pair.into_inner().into()),
+                Rule::method => entity.methods.push(pair.into_inner().into()),
+                _ => unreachable!("Unreachable code from Entity#from"),
             }
         }
         return entity;
@@ -123,7 +122,8 @@ impl<'i> From<Pairs<'i, Rule>> for Method {
         for pair in pairs {
             match pair.as_rule() {
                 Rule::identifier => method.name = pair.as_str().to_string(),
-                _ => break,
+                Rule::parameters => (),
+                _ => unreachable!("Unreachable code from Method#from"),
             }
         }
         return method;
@@ -141,7 +141,7 @@ impl<'i> From<Pairs<'i, Rule>> for Attribute {
             match pair.as_rule() {
                 Rule::identifier => attribute.name = pair.as_str().to_string(),
                 Rule::atype => attribute.atype = pair.as_str().to_string(),
-                _ => break,
+                _ => unreachable!("Unreachable code from Attribute#from"),
             }
         }
         return attribute;

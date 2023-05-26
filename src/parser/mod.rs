@@ -5,7 +5,7 @@ mod errors;
 use errors::ParseError;
 
 mod grammar;
-use grammar::{Entity, Package, Scope};
+use grammar::Package;
 
 #[derive(Parser)]
 #[grammar = "grammar_inc.pest"]
@@ -19,52 +19,7 @@ fn parse(input: &str) -> Result<Package, ParseError> {
     for pair in pairs {
         match pair.as_rule() {
             Rule::package => {
-                dbg!(&pair);
-                let inner_pairs = pair.into_inner();
-                // NOTE: Cloning here to reset the iterator
-
-                let mut root_package: Package = inner_pairs.clone().into();
-                // TODO: This is a bit of a mess, need to clean this up
-
-                // Maybe we can use a recursive function to parse the inner pairs
-                for pair in inner_pairs {
-                    match pair.as_rule() {
-                        Rule::entities => {
-                            for entity in pair.into_inner() {
-                                match entity.as_rule() {
-                                    Rule::entity => {
-                                        let inner_values = entity.into_inner();
-                                        let mut entity: Entity = inner_values.clone().into();
-
-                                        for inner_value in inner_values {
-                                            match inner_value.as_rule() {
-                                                Rule::methods => {
-                                                    for method in inner_value.into_inner() {
-                                                        match method.as_rule() {
-                                                            Rule::method => {
-                                                                entity.methods.push(
-                                                                    method.into_inner().into(),
-                                                                );
-                                                            }
-                                                            _ => {
-                                                                unreachable!("Unknown method rule")
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                                _ => (),
-                                            }
-                                        }
-                                        root_package.entities.push(entity);
-                                    }
-                                    _ => unreachable!("Unkown entity rule"),
-                                }
-                            }
-                        }
-                        _ => (),
-                    }
-                }
-                return Ok(root_package);
+                return Ok(pair.into_inner().into());
             }
             _ => unreachable!(),
         }
@@ -77,6 +32,7 @@ fn parse(input: &str) -> Result<Package, ParseError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::parser::grammar::Scope;
 
     #[test]
     fn test_missing_root_package() {
