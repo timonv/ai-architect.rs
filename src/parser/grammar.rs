@@ -33,7 +33,7 @@ impl<'i> TryFrom<Pairs<'i, Rule>> for Package {
                     let versions: Vec<Option<u8>> = pair
                         .into_inner()
                         .as_str()
-                        .split(".")
+                        .split('.')
                         .map(|n| Some(n.parse().unwrap_or(0)))
                         .collect();
 

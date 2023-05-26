@@ -41,14 +41,14 @@ mod tests {
     #[test]
     fn test_parse_package() {
         let example = "package Test";
-        let result = parse(example).unwrap_or_else(|e| panic!("{}", e));
+        let result = parse(example).unwrap_or_else(|e| panic!("{}", e.to_string()));
         assert_eq!(&result.name, "Test")
     }
 
     #[test]
     fn test_parse_version() {
         let example = "package Test version 1.0.0";
-        let result = parse(example).unwrap_or_else(|e| panic!("{}", e));
+        let result = parse(example).unwrap_or_else(|e| panic!("{}", e.to_string()));
         assert_eq!(&result.name, "Test");
         assert!(&result.version.is_some());
         let version = result.version.unwrap();
