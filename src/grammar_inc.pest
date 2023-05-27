@@ -7,11 +7,12 @@ attributes = _{ "(" ~ attribute* ~ ")" }
 attribute = { identifier ~ ":" ~ atype ~ ","? }
 
 methods = _{ method+ }
-method = ${ "method " ~ identifier ~ parameters }
+method = ${ "method " ~ identifier ~ parameters ~ returns? }
 
 scope = { "public" | "private" }
 atype = { identifier }
 parameters = !{ "(" ~ attribute* ~ ")" }
+returns = { " -> " ~ atype }
 
 identifier = @{ (ASCII_ALPHANUMERIC|"_")+ }
 version = { "version" ~ number ~ "." ~ number ~ "." ~ number }

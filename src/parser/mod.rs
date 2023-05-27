@@ -106,4 +106,37 @@ mod tests {
         let method = entity.methods.first().unwrap();
         assert_eq!(method.name, "get_name");
     }
+
+    #[test]
+    fn test_methods_with_parameters_and_return_types() {
+        // TODO: Multiple parameters
+        let example = "package Test version 1.0.0 {
+                    public entity TestEntity {
+                        method get_name() -> string
+                        method set_name(name: string)
+                        method get_and_set_name(name: string) -> string
+                    }
+                }";
+
+        let result = parse(example).unwrap_or_else(|e| panic!("{}", e.to_string()));
+        let entity = result.entities.first().unwrap();
+        dbg!(&entity.methods);
+        if let [get_name, set_name, get_and_set_name] = &entity.methods[0..=2] {
+            assert_eq!(get_name.name, "get_name");
+            assert_eq!(get_name.returns, "string");
+
+            assert_eq!(set_name.name, "set_name");
+            assert_eq!(set_name.parameters.len(), 1);
+            assert_eq!(set_name.parameters[0].name, "name");
+            assert_eq!(set_name.parameters[0].atype, "string");
+
+            assert_eq!(get_and_set_name.name, "get_and_set_name");
+            assert_eq!(get_and_set_name.returns, "string");
+            assert_eq!(get_and_set_name.parameters.len(), 1);
+            assert_eq!(get_and_set_name.parameters[0].name, "name");
+            assert_eq!(get_and_set_name.parameters[0].atype, "string");
+        } else {
+            panic!("Not all methods found")
+        }
+    }
 }

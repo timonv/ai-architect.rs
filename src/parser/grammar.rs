@@ -1,9 +1,5 @@
 use super::{Pairs, Rule};
 
-// TODO: Replace breaks with errors. Need to find a way to work around grammar pest side missing
-// compile time types, looks like they're constants (Is that even true?). Perhaps guard on the pairs type, switch to try_from
-// and return a ParseError::RuleError if the type is not what we expect.
-
 #[derive(Debug)]
 pub struct Package {
     pub name: String,
@@ -29,6 +25,8 @@ pub enum Scope {
 pub struct Method {
     pub name: String,
     pub attributes: Vec<Attribute>,
+    pub returns: String,
+    pub parameters: Vec<Attribute>,
 }
 
 #[derive(Debug)]
@@ -118,11 +116,16 @@ impl<'i> From<Pairs<'i, Rule>> for Method {
         let mut method = Method {
             name: "".to_string(),
             attributes: vec![],
+            returns: "".to_string(),
+            parameters: vec![],
         };
         for pair in pairs {
             match pair.as_rule() {
                 Rule::identifier => method.name = pair.as_str().to_string(),
-                Rule::parameters => (),
+                Rule::returns => method.returns = pair.into_inner().as_str().to_string(),
+                Rule::parameters => pair
+                    .into_inner()
+                    .for_each(|p| method.parameters.push(p.into_inner().into())),
                 _ => unreachable!("Unreachable code from Method#from"),
             }
         }
