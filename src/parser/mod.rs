@@ -115,13 +115,16 @@ mod tests {
                         method get_name() -> string
                         method set_name(name: string)
                         method get_and_set_name(name: string) -> string
+                        method get_multiple_parameters(name: string, age: integer) -> string
                     }
                 }";
 
         let result = parse(example).unwrap_or_else(|e| panic!("{}", e.to_string()));
         let entity = result.entities.first().unwrap();
         dbg!(&entity.methods);
-        if let [get_name, set_name, get_and_set_name] = &entity.methods[0..=2] {
+        if let [get_name, set_name, get_and_set_name, get_multiple_parameters] =
+            &entity.methods[0..=3]
+        {
             assert_eq!(get_name.name, "get_name");
             assert_eq!(get_name.returns, "string");
 
@@ -135,6 +138,15 @@ mod tests {
             assert_eq!(get_and_set_name.parameters.len(), 1);
             assert_eq!(get_and_set_name.parameters[0].name, "name");
             assert_eq!(get_and_set_name.parameters[0].atype, "string");
+
+            assert_eq!(get_multiple_parameters.name, "get_multiple_parameters");
+            assert_eq!(get_multiple_parameters.returns, "string");
+            assert_eq!(get_multiple_parameters.parameters.len(), 2);
+            assert_eq!(get_multiple_parameters.parameters[0].name, "name");
+            assert_eq!(get_multiple_parameters.parameters[0].atype, "string");
+            assert_eq!(get_multiple_parameters.parameters.len(), 2);
+            assert_eq!(get_multiple_parameters.parameters[1].name, "age");
+            assert_eq!(get_multiple_parameters.parameters[1].atype, "integer");
         } else {
             panic!("Not all methods found")
         }
