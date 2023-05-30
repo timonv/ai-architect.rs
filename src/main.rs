@@ -2,5 +2,6 @@
 extern crate pest_derive;
 
 mod parser;
+mod prompter;
 
 fn main() {}
