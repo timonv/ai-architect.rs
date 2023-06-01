@@ -1,8 +1,5 @@
-use async_trait::async_trait;
 use reqwest::Error;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
-use tokio::runtime::Runtime;
 
 #[derive(Serialize)]
 struct Prompt {
@@ -10,7 +7,7 @@ struct Prompt {
     max_tokens: i32,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct Response {
     id: String,
     object: String,
@@ -19,24 +16,29 @@ struct Response {
     choices: Vec<Choice>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct Choice {
     text: String,
 }
 
-#[async_trait]
-pub trait Client {
-    async fn request(&self, prompt: &Prompt) -> Result<Response, Error>;
+struct Client {
+    api_url: String,
 }
 
-pub struct GptClient;
-
-#[async_trait]
-impl Client for GptClient {
+impl Client {
     async fn request(&self, prompt: &Prompt) -> Result<Response, Error> {
         let client = reqwest::Client::new();
         let resp = client
-            .post("https://api.openai.com/v1/engines/davinci/completions")
+            .post(&self.api_url)
+            .json(prompt)
+            .send()
+            .await?
+            .text()
+            .await;
+
+        dbg!(&resp);
+        let resp = client
+            .post(&self.api_url)
             .json(prompt)
             .send()
             .await?
@@ -47,55 +49,55 @@ impl Client for GptClient {
     }
 }
 
-pub struct ChatService {
-    client: Arc<dyn Client>,
-}
-
-impl ChatService {
-    pub fn new(client: Arc<dyn Client>) -> Self {
-        Self { client }
-    }
-
-    pub fn chat(&self, prompt: &Prompt) -> Result<Response, Error> {
-        self.client.request(prompt)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mockito::mock;
 
-    struct MockClient;
-
-    impl Client for MockClient {
-        fn request(&self, _prompt: &Prompt) -> Result<Response, Error> {
-            let res = Response {
-                id: "test_id".to_string(),
-                object: "text.completion".to_string(),
-                created: 0,
-                model: "gpt-4.0-turbo".to_string(),
-                choices: vec![Choice {
-                    text: "Translated text".to_string(),
-                }],
-            };
-
-            Ok(res)
-        }
-    }
-
-    #[test]
-    fn test_chat_service() {
-        let chat_service = ChatService::new(Arc::new(MockClient));
-
+    #[tokio::test]
+    async fn test_request() {
+        let mut server = mockito::Server::new();
+        // Create a dummy prompt for testing
         let prompt = Prompt {
-            prompt: "Translate the following English text to French: '{}'",
-            max_tokens: 60,
+            prompt: String::from("Test prompt"),
+            max_tokens: 10,
         };
 
-        let res = chat_service.chat(&prompt).unwrap();
+        // Create a mock HTTP response
+        let response_body = r#"{
+            "id": "response_id",
+            "object": "response_object",
+            "created": 1622457600,
+            "model": "response_model",
+            "choices": [
+                {
+                    "text": "Choice 1"
+                },
+                {
+                    "text": "Choice 2"
+                }
+            ]
+        }"#;
+        server
+            .mock("POST", mockito::Matcher::Any)
+            .with_body(response_body)
+            .create();
 
-        assert_eq!(res.id, "test_id");
-        assert_eq!(res.choices[0].text, "Translated text");
+        // Call the request function and assert the result
+        let client = Client {
+            api_url: server.url(),
+        };
+
+        let result = client.request(&prompt).await;
+        dbg!(&result);
+        assert!(result.is_ok());
+
+        let response = result.unwrap();
+        assert_eq!(response.id, "response_id");
+        assert_eq!(response.object, "response_object");
+        assert_eq!(response.created, 1622457600);
+        assert_eq!(response.model, "response_model");
+        assert_eq!(response.choices.len(), 2);
+        assert_eq!(response.choices[0].text, "Choice 1");
+        assert_eq!(response.choices[1].text, "Choice 2");
     }
 }
