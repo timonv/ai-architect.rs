@@ -19,7 +19,7 @@ async fn main() {
     let mut messages = vec![ChatCompletionMessage {
         role: ChatCompletionMessageRole::System,
         content: r#"
-            You are a software system designer. Your role is to design a software system using the custom 3DL system design language.
+            You are a software system designer. Your role is to design a software system using the custom 3DL system design language. Me, the user, will provide incremental feedback to improve and change the design.
 
             Here is an example of 3DL:
             ---
@@ -56,17 +56,18 @@ async fn main() {
             number = @{ ASCII_DIGIT+ }
             ---
 
-            When processing more messages to update the design, ONLY change what the user requested. Do not change the design of the system unless the user explicitly requests it. Then always include the full design.
+            Respect the following constraints:
+            * Use proper types where possible
+            * Always return the full updated design
+            * Prefer using entities over primitive types
 
             Respond ONLY with a json object, and include no other commentary, in this format:
             ```
             {
               "3dl": "The 3DL",
-              "mermaid": "The system design in valid mermaid format",
               "thoughts": "Any additional thoughts or comments you have on the design",
               
             }
-
             ```
         "#.to_string(),
         name: None
