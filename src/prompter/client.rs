@@ -53,9 +53,20 @@ impl Client {
 mod tests {
     use super::*;
 
+    fn mocked_client_with_response(response: &str) -> Client {
+        let mut server = mockito::Server::new();
+        server
+            .mock("POST", mockito::Matcher::Any)
+            .with_body(response)
+            .create();
+
+        Client {
+            api_url: server.url(),
+        }
+    }
+
     #[tokio::test]
     async fn test_request() {
-        let mut server = mockito::Server::new();
         // Create a dummy prompt for testing
         let prompt = Prompt {
             prompt: String::from("Test prompt"),
@@ -77,17 +88,10 @@ mod tests {
                 }
             ]
         }"#;
-        server
-            .mock("POST", mockito::Matcher::Any)
-            .with_body(response_body)
-            .create();
 
-        // Call the request function and assert the result
-        let client = Client {
-            api_url: server.url(),
-        };
-
-        let result = client.request(&prompt).await;
+        let result = mocked_client_with_response(response_body)
+            .request(&prompt)
+            .await;
         dbg!(&result);
         assert!(result.is_ok());
 
@@ -99,5 +103,23 @@ mod tests {
         assert_eq!(response.choices.len(), 2);
         assert_eq!(response.choices[0].text, "Choice 1");
         assert_eq!(response.choices[1].text, "Choice 2");
+    }
+
+    #[tokio::test]
+    async fn test_invalid_response_usable_error() {
+        // TODO: Ideally return bad errors to user or something
+        let prompt = Prompt {
+            prompt: String::from("Test prompt"),
+            max_tokens: 10,
+        };
+
+        // Create a mock HTTP response
+        let response_body = r#"Invalid json"#;
+
+        let result = mocked_client_with_response(response_body)
+            .request(&prompt)
+            .await;
+        dbg!(&result);
+        assert!(result.is_err());
     }
 }
